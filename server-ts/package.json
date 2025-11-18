@@ -1,0 +1,31 @@
+{
+    "name": "server-ts",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/app.js",
+    "type": "module",
+    "scripts": {
+        "dev": "nodemon dist/app.js",
+        "build": "tsc",
+        "fmt": "pnpm prettier --write .",
+        "pfmt": "pnpm prettier --check ."
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "packageManager": "pnpm@10.15.0",
+    "dependencies": {
+        "@prisma/client": "^6.19.0",
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.3",
+        "express": "^5.1.0",
+        "nodemon": "^3.1.11"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.5",
+        "@types/node": "^24.10.1",
+        "prettier": "3.6.2",
+        "prisma": "^6.19.0"
+    }
+}
