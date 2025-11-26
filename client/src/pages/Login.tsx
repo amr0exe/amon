@@ -1,11 +1,15 @@
-import { useState } from "react"
+import { useState, useContext } from "react"
 import axios from "axios"
 import { arrayBufferToBase64, base64ToArrayBuffer, getKey } from "../service/db"
 import { useNavigate } from "react-router-dom"
+import UserContext from "../context/UserContext"
 
 function Login() {
-	const [username, setUsername] = useState<string>("")
 	const navigate = useNavigate()
+	const context = useContext(UserContext)
+	if (!context) return
+
+	const { setUsername, username } = context
 
 	const handleLogin = async () => {
 		if (username === "") {
@@ -44,7 +48,7 @@ function Login() {
 		}
 
 		console.log("User authenticated !!!", username)
-		navigate("/opp")
+		navigate("/")
 	}
 
 	return <div className="flex flex-col items-end">

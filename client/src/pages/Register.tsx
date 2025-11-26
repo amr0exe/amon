@@ -1,9 +1,13 @@
-import { useState } from "react"
+import { useContext, useState } from "react"
 import axios from "axios"
 import { saveKey, base64ToArrayBuffer } from "../service/db"
+import UserContext from "../context/UserContext"
 
 function Register() {
-	const [username, setUsername] = useState<string>("")
+	const context = useContext(UserContext)
+	if (!context) return
+
+	const { username, setUsername } = context
 
 	const handleRegister = async () => {
 		if (username === "") {

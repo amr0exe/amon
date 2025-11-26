@@ -23,6 +23,7 @@ model User {
 
   challenges Challenge[]
   opinions   Opinion[]
+  comments Comment[]
 }
 
 model Challenge {
@@ -53,4 +54,7 @@ model Comment {
 
   opinion   Opinion @relation(fields: [opinionId], references: [id])
   opinionId Int
+
+  user User @relation(fields: [userId], references: [id])
+  userId Int
 }
