@@ -14,8 +14,6 @@ app.use(cors())
 
 app.use("/", router)
 
-// Opps creation
-
 app.listen(PORT, () => {
     console.log("listening on port :3000")
 })

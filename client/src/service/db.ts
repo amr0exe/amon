@@ -82,4 +82,39 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
 	return bytes.buffer;
 }
 
-export { openDB, saveKey, getKey, base64ToArrayBuffer, arrayBufferToBase64 }
+/**
+ * 
+ * Signs your string with your privateKey
+ */
+async function signTheOpp(username: string, content: string): Promise<string> {
+	const privateKeybase64 = await getKey(username)
+	if (!privateKeybase64) {
+		console.log("No privateKey found locally !!!")
+		return ""
+	}
+
+	const privateKeyBuffer = base64ToArrayBuffer(privateKeybase64)
+	const privateKey = await crypto.subtle.importKey(
+		'pkcs8',
+		privateKeyBuffer,
+		{ name: 'Ed25519'},
+		true,
+		['sign']
+	)
+
+	// encode content, str -> bytes
+	const enc = new TextEncoder()
+	const content_bytes = enc.encode(content)
+
+	// sign the opinion
+	const signedOpp = await crypto.subtle.sign(
+		{ name: 'Ed25519' },
+		privateKey,
+		content_bytes
+	)
+	const content_1 = arrayBufferToBase64(signedOpp)
+
+	return content_1
+}
+
+export { openDB, saveKey, getKey, base64ToArrayBuffer, arrayBufferToBase64, signTheOpp }
