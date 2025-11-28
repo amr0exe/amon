@@ -3,7 +3,7 @@ import Register from "./Register"
 import Login from "./Login"
 
 function Auth() {
-	const [authOpp, setAuthOpp] = useState<"register" | "login">("register")
+	const [authOpp, setAuthOpp] = useState<"register" | "login">("login")
 
 	return <div className="h-screen font-mono flex flex-col items-center">
 		{/* TOP bar */}

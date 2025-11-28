@@ -77,7 +77,7 @@ const getOpinions = async (_req: Request, res: Response) => {
             opinion: true,
             createdAt: true,
             userId: true,
-            comments: true,
+            _count: { select: { comments: true } },
         },
     })
 
