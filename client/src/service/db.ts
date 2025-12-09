@@ -117,4 +117,18 @@ async function signTheOpp(username: string, content: string): Promise<string> {
 	return content_1
 }
 
-export { openDB, saveKey, getKey, base64ToArrayBuffer, arrayBufferToBase64, signTheOpp }
+function generateNonce() {
+    const bytes = new Uint8Array(4)
+    crypto.getRandomValues(bytes)
+
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+}
+
+function hashToBase64(str: string) {
+    return btoa(
+        new TextEncoder().encode(str)
+            .reduce((s, b) => s + String.fromCharCode(b), "")
+    )
+}
+
+export { openDB, saveKey, getKey, base64ToArrayBuffer, arrayBufferToBase64, signTheOpp, generateNonce, hashToBase64 }

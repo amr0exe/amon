@@ -8,14 +8,16 @@ import ErrorPage from "./Error"
 import Overlay from "./components/Overlay"
 import { formatDate } from "../service/utils"
 import UserContext from "../context/UserContext"
+import { generateNonce, hashToBase64, signTheOpp } from "../service/db"
 
 
 function Landing() {
-	const { opps, loading, error, refetch } = useOpps()
-	const navigate = useNavigate()
-
 	const context = useContext(UserContext)
 	if (!context) return
+	const { username } = context
+
+	const { opps, loading, error, refetch } = useOpps(username)
+	const navigate = useNavigate()
 
 	const [pageMap, setPageMap] = useState<Record<number, number>>({})
 	const [commentsMap, setCommentsMap] = useState<Record<number, Array<CommentR>>>({})
@@ -25,7 +27,6 @@ function Landing() {
 	const [content, setContent] = useState("")
 	const [openOppId, setOpenOppId] = useState<number|null>(null)
 
-	const { username } = context
 	if (username === "") {
 		console.log("username empty")
 		navigate("/auth")
@@ -39,7 +40,20 @@ function Landing() {
 		const currentPage = pageMap[oppId] ?? 1 // returns page_no if not defaults_to_1
 
 		try {
-			const resp = await axios.get(`http://localhost:3000/opp/${oppId}/comments?page=${currentPage}`)
+            const req_type = "GET"
+            const nonce = generateNonce()
+            const sig_str = `${req_type}${nonce}${username}`
+            const sig_hash = hashToBase64(sig_str)
+            const signed_hash = await signTheOpp(username, sig_hash)
+
+			const resp = await axios.get(`http://localhost:3000/opp/${oppId}/comments?page=${currentPage}`,
+                {
+                    headers: {
+                        'x-nonce': nonce,
+                        'x-nickname': username,
+                        'x-sig': signed_hash
+                    }
+                })
 			setCommentsMap(prev => ({ ...prev, [oppId]: resp.data.comments }))
 
 			if (resp.data.hasMore) {

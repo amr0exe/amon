@@ -1,6 +1,7 @@
 import { useState } from "react"
-import { signTheOpp } from "../../service/db"
+import { hashToBase64, signTheOpp } from "../../service/db"
 import axios from "axios"
+import { generateNonce } from "../../service/db"
 
 function Overlay({
     onClose,
@@ -16,7 +17,21 @@ function Overlay({
     const handleSubmit = async () => {
         try {
             const sig_content = await signTheOpp(username, content)
-            const response = await axios.post("http://localhost:3000/opp", { nickname: username, content, signedContent: sig_content})
+
+            // authg
+            const req_type = "POST"
+            const nonce = generateNonce()
+            const sig_str = `${req_type}${nonce}${username}`
+            const sig_hash = hashToBase64(sig_str)
+            const signed_hash = await signTheOpp(username, sig_hash)
+
+            const response = await axios.post("http://localhost:3000/opp", { nickname: username, content, signedContent: sig_content}, {
+                headers: {
+                    "X-Nonce": nonce,
+                    "X-Nickname": username,
+                    "X-Sig": signed_hash
+                }
+            })
             if (response.data.status === "success") {
                 console.log("Opp raised successfully")
 
