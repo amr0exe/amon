@@ -44,6 +44,8 @@ model Opinion {
   user     User      @relation(fields: [userId], references: [id])
   userId   Int
   comments Comment[]
+
+  @@index([opinion], map: "opp_idx")
 }
 
 model Comment {

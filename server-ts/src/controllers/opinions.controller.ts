@@ -95,6 +95,33 @@ const getOpinions = async (_req: Request, res: Response) => {
     })
 }
 
+const getSingleOpinion = async (req: Request, res: Response) => {
+    const id = Number(req.params.id)
+
+    const Opp = await prisma.opinion.findFirst({ 
+        where: { id },
+        select: {
+            id: true,
+            opinion: true,
+            createdAt: true,
+            userId: true,
+            _count: { select: { comments: true } },
+        },
+    })
+    if (!Opp) {
+        return res.status(401).json({
+            status: "fail",
+            message: "Failed fetching Opps ...",
+        })
+    }
+
+    res.status(200).json({
+        status: "success",
+        message: "Opps fetched successfully ...",
+        opinion: Opp
+    })
+}
+
 // Not DELETE, archive's the post when heavily reported
 //
 const archiveOpinion = () => {
@@ -110,4 +137,4 @@ const archiveOpinion = () => {
     // or to put at last on priority list
 }
 
-export { raiseOpinion, getOpinions }
+export { raiseOpinion, getOpinions, getSingleOpinion }
