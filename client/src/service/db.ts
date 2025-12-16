@@ -1,12 +1,16 @@
 const openDB = () => {
 	return new Promise<IDBDatabase>((resolve, reject) => {
-		const request = indexedDB.open("amonStore", 1)
+		const request = indexedDB.open("amonStore", 2)
 
 		request.onupgradeneeded = () => {
 			const db = request.result
 			if (!db.objectStoreNames.contains("keys")) {
 				db.createObjectStore("keys", { keyPath: "nickname" })
 			}
+
+            if (!db.objectStoreNames.contains("session")) {
+                db.createObjectStore("session", { keyPath: "id" }) // key_path is basically identifier/primary_key
+            }
 		}
 
 		request.onsuccess = () => resolve(request.result)
@@ -56,6 +60,57 @@ const getKey = async (nickname: string) => {
 		request.onsuccess = () => resolve(request.result?.key ?? null)
 		request.onerror = reject
 	})
+}
+
+const setActiveUser = async (nickname: string) => {
+    const db = await openDB()
+
+    return new Promise<void>((resolve, reject) => {
+        const tx = db.transaction("session", "readwrite")
+        const store = tx.objectStore("session")
+
+        const req = store.put({
+            id: "activeUser",
+            nickname,
+            lastLogin: Date.now()
+        })
+
+        req.onsuccess = () => resolve()
+        req.onerror = () => reject(req.error)
+   })
+}
+
+const getActiveUser = async (): Promise<string|null> => {
+    const db = await openDB()
+
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("session", "readonly")
+        const store = tx.objectStore("session")
+
+        const req = store.get("activeUser")
+        req.onsuccess = () => {
+			if (!req.result) {
+				console.log("No active user found (might be first_run/logged_out)")
+				resolve(null)
+				return
+			}
+			resolve(req.result?.nickname ?? null)
+		} 
+        req.onerror = () => reject(req.error)
+    })
+} 
+
+const clearActiveUser = async () => {
+    const db = await openDB()
+
+    return new Promise<void>((resolve, reject) => {
+        const tx = db.transaction("session", "readwrite")
+        const store = tx.objectStore("session")
+
+        const req = store.delete("activeUser")
+        req.onsuccess = () => resolve()
+        req.onerror = () => reject(req.error)
+    })
 }
 
 /**
@@ -131,4 +186,4 @@ function hashToBase64(str: string) {
     )
 }
 
-export { openDB, saveKey, getKey, base64ToArrayBuffer, arrayBufferToBase64, signTheOpp, generateNonce, hashToBase64 }
+export { openDB, saveKey, getKey, base64ToArrayBuffer, arrayBufferToBase64, signTheOpp, generateNonce, hashToBase64, getActiveUser, setActiveUser, clearActiveUser }

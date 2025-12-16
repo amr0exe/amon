@@ -1,5 +1,4 @@
-import React, { useContext, useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import React, { useEffect, useState } from "react"
 import axios from "axios"
 
 import { useOpps, postComment, type CommentR, useDebounce, type Opps } from "../service/opps"
@@ -7,26 +6,12 @@ import LoadingPage from "./Loading"
 import ErrorPage from "./Error"
 import Overlay from "./components/Overlay"
 import { formatDate } from "../service/utils"
-import UserContext from "../context/UserContext"
-import { generateNonce, hashToBase64, signTheOpp } from "../service/db"
+import { generateNonce, getActiveUser, hashToBase64, signTheOpp } from "../service/db"
+import { useUserContext } from "../context/UserContext"
 
 function Landing() {
-    const context = useContext(UserContext)
-    const navigate = useNavigate()
-
-    useEffect(() => {
-        if (context && context.username === "") {
-            navigate("/auth")
-        }
-
-    }, [context, navigate])
-
-    if (!context || context.username === "") {
-        console.log("No username")
-        return
-    }
-
-    const { username } = context
+    const ctx = useUserContext()
+    const { username, setUsername } = ctx
 
     const { opps, moveToTop, loading, error, refetch } = useOpps(username)
 
@@ -94,6 +79,14 @@ function Landing() {
         console.log("Searching for ..", debouncedQuery)
         
     }, [debouncedQuery])
+
+    useEffect(() => {
+        const restoreUser = async () => {
+            const a_user = await getActiveUser()
+            if (a_user) setUsername(a_user)
+        }
+        if (!username) restoreUser()
+    }, [])
 
 
     if (loading) {
@@ -183,7 +176,7 @@ function Landing() {
                     <div
                         className="w-full sm:w-11/12 md:w-10/12 min-h-20 rounded-sm border px-4 sm:px-8 md:px-14 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0"
                     >
-                        <p className="text-lg sm:text-xl md:text2xl tracking-tighter wrap-break-words">{e.opinion}</p>
+                        <p className="text-md sm:text-lg md:text-xl tracking-tighter wrap-break-words">{e.opinion}</p>
 
                         <div className="text-xs sm:text-sm flex flex-col gap-1 sm:gap-2 font-normal tracking-tighter shrink-0">
                             <span className="text-slate-600">{formatDate(e.createdAt)}</span>

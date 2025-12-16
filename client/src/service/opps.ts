@@ -1,6 +1,6 @@
 import axios from "axios"
 import { useState, useEffect } from "react"
-import { generateNonce, hashToBase64, signTheOpp } from "./db";
+import { generateNonce, getActiveUser, hashToBase64, signTheOpp } from "./db";
 
 export type Opps = {
     id: number;
@@ -35,6 +35,12 @@ export function useOpps(nickname: string) {
 
     const fetchOpps = async () => {
         try {
+            if (!nickname) {
+                const activeUser = await getActiveUser()
+                if (activeUser) nickname = activeUser
+                console.log("refresh user", activeUser)
+            }
+
             const req_type = "GET"
             const nonce = generateNonce()
             const sig_str = `${req_type}${nonce}${nickname}`

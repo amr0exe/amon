@@ -1,15 +1,17 @@
-import { useState, useContext } from "react"
 import axios from "axios"
-import { arrayBufferToBase64, base64ToArrayBuffer, getKey } from "../service/db"
 import { useNavigate } from "react-router-dom"
-import UserContext from "../context/UserContext"
+import { arrayBufferToBase64, base64ToArrayBuffer, getKey, setActiveUser } from "../service/db"
+import { useUserContext } from "../context/UserContext"
+import { useAuth } from "../context/AuthContext"
 
 function Login() {
-	const navigate = useNavigate()
-	const context = useContext(UserContext)
-	if (!context) return
+	const ctx = useUserContext()
+	const { setUsername, username } = ctx
 
-	const { setUsername, username } = context
+	const ctx_r = useAuth()
+	const { login } = ctx_r	
+
+	const navigate = useNavigate()
 
 	const handleLogin = async () => {
 		if (username === "") {
@@ -46,7 +48,9 @@ function Login() {
 			console.log("Signature verificaiton failed")
 			return
 		}
-
+        
+        await setActiveUser(username)
+		login({ username })
 		console.log("User authenticated !!!", username)
 		navigate("/")
 	}
