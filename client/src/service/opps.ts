@@ -30,10 +30,13 @@ export type Opp = {
 
 export function useOpps(nickname: string) {
     const [opps, setOpps] = useState<Opps[]>([])
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<Error | null>(null)
+    const [page, setPage] = useState(1)
+    const [hasMore, setHasMore] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
 
-    const fetchOpps = async () => {
+    const fetchOpps = async (pageNum: number = 1, append: boolean = false) => {
         try {
             if (!nickname) {
                 const activeUser = await getActiveUser()
@@ -47,8 +50,8 @@ export function useOpps(nickname: string) {
             const sig_hash = hashToBase64(sig_str)
             const signed_hash = await signTheOpp(nickname, sig_hash)
 
-            setLoading(true)
-            const response = await axios.get("http://localhost:3000/opp",
+            if (page > 1) { setLoading(true) }
+            const response = await axios.get(`http://localhost:3000/opp?page=${pageNum}`,
                 {
                     headers: {
                         'x-nonce': nonce,
@@ -56,19 +59,38 @@ export function useOpps(nickname: string) {
                         'x-sig': signed_hash
                     }
                 })
-            //setOpps(response.data.opps)
-            setOpps(prev => {
-                const map = new Map(prev.map(o => [o.id, o]))
-                for (const opp of response.data.opps) {
-                    map.set(opp.id, opp)
-                }
-                return Array.from(map.values())
-            })
+            setHasMore(response.data.hasMore)
+
+            if (!hasMore) {
+                console.log("End of Opp records ...")
+                return
+            }
+            
+            if (append) {
+                setOpps(prev => {
+                    const map = new Map(prev.map(o => [o.id, o]))
+                    for (const opp of response.data.opps) {
+                        map.set(opp.id, opp)
+                    }
+                    return Array.from(map.values())
+                })
+            } else {
+                setOpps(response.data.opps)
+            }
         } catch (err) {
             setError(err as Error)
         } finally {
-            setLoading(false)
+            if (page > 1) { setLoading(false) }
         }
+    }
+
+    const loadMore = async () => {
+        if (!hasMore || loading || loadingMore) return
+        setLoadingMore(true)
+        const nextPage = page + 1
+        setPage(nextPage)
+        await fetchOpps(nextPage, true)
+        setLoadingMore(false)
     }
 
     const moveToTop = (opp: Opps) => {
@@ -79,11 +101,24 @@ export function useOpps(nickname: string) {
         //console.log("clicked moveToTop", opps)
     }
 
+    const incrementCommentCount = (oppId: number) => {
+        setOpps(prev => 
+            prev.map(o => 
+                o.id === oppId ?
+                { ...o, _count: { ...o._count, comments: o._count.comments + 1 } }: o
+            )
+        )
+    }
+
     useEffect(() => {
-        fetchOpps()
+        fetchOpps(1, false)
     }, [])
 
-    return { opps, setOpps, loading, error, refetch: fetchOpps, moveToTop  }
+    return { opps, setOpps, loading, error, refetch: () => {
+        setPage(1)
+        setHasMore(true)
+        fetchOpps(1, false)
+        }, moveToTop, incrementCommentCount, loadMore, hasMore, loadingMore }
 }
 
 export async function postComment(nickname: string, oppId: number, content: string ) {

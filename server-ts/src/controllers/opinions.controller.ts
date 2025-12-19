@@ -66,20 +66,26 @@ const raiseOpinion = async (req: Request, res: Response) => {
     })
 }
 
-const getOpinions = async (_req: Request, res: Response) => {
-    //
-    // get_opinions
-    // TODO: pagination page/1
+const getOpinions = async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1
+    const pageSize = 9
 
-    const opinions = await prisma.opinion.findMany({
-        select: {
-            id: true,
-            opinion: true,
-            createdAt: true,
-            userId: true,
-            _count: { select: { comments: true } },
-        },
-    })
+    const [opinions, total] = await Promise.all([
+        prisma.opinion.findMany({
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            select: {
+                id: true,
+                opinion: true,
+                createdAt: true,
+                userId: true,
+                _count: { select: { comments: true } },
+            },
+        }),
+        prisma.opinion.count()
+    ])
+
+    const hasMore: Boolean = page * pageSize < total
 
     if (!opinions) {
         return res.json({
@@ -91,6 +97,7 @@ const getOpinions = async (_req: Request, res: Response) => {
     return res.status(200).json({
         status: "success",
         message: "Options fetched successfully",
+        hasMore,
         opps: opinions,
     })
 }
