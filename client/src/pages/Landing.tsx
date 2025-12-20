@@ -23,7 +23,8 @@ function Landing() {
 
     // overlay
     const [isOpen, setIsOpen] = useState(false)
-    const [content, setContent] = useState("")
+    const [content, setContent] = useState("") // comment_content
+    const MAX_COMMENT_LENGTH = 75
     const [openOppId, setOpenOppId] = useState<number|null>(null)
 
     // search-bar
@@ -255,12 +256,21 @@ function Landing() {
                                 placeholder="write your comment ..."
                                 className="flex-1 border p-2 sm:p-3 text-xs sm:text-sm rounded"
                                 value={content}
-                                onChange={(e) => setContent(e.target.value)}
-
+                                onChange={(e) => {
+                                    if (e.target.value.length <= MAX_COMMENT_LENGTH) {
+                                        setContent(e.target.value)
+                                    }
+                                }}
                             />
+
+                            <span className={`text-xs text-right ${content.length > MAX_COMMENT_LENGTH * 0.9 ? 'text-red-500': 'text-slate-500'}`}>
+                                {content.length}/{MAX_COMMENT_LENGTH}
+                            </span>
+
                             <button
                                 className="cursor-pointer px-3 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm whitespace-nowrap bg-cyan-600 text-white rounded-md hover:scale-110 transform transition-transform duration-200 ease-in-out"
                                 onClick={async () => {
+                                    if (!content.trim()) return
                                     await postComment(username, e.id, content)
                                     setContent("")
                                     // reset hasMore, for this comment
@@ -277,8 +287,8 @@ function Landing() {
                             ) : (
                                 commentsMap[e.id].map((c: any, idx: number) => (
                                     <div key={c.id ?? idx} className="bg-white border rounded p-3 sm:p-4 w-full">
-                                        <p className="text-xs sm:text-sm text-right wrap-break-word">{c.content}</p>
-                                        <p className="text-xs text-slate-400 text-right">{formatDate(c.createdAt)}</p>
+                                        <p className="text-xs sm:text-sm text-right wrap-break-word whitespace-pre-wrap overflow-wrap-anywhere">{c.content}</p>
+                                        <p className="text-xs text-slate-400 text-right mt-2">{formatDate(c.createdAt)}</p>
                                     </div>
                                 ))
                             )}

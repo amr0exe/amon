@@ -13,8 +13,11 @@ function Overlay({
     onSuccess: () => void
 }) {
     const [content, setContent] = useState("")
+    const MAX_LENGTH = 50
 
     const handleSubmit = async () => {
+        if (!content.trim() || content.length > MAX_LENGTH) return
+
         try {
             const sig_content = await signTheOpp(username, content)
 
@@ -50,11 +53,21 @@ function Overlay({
         onClick={onClose}
     >
         <div className="bg-white p-6 rounded shadow-md w-full max-w-md text-sm sm:text-md" onClick={stopPropagation}>
-            <label className="block mb-2 font-medium text-black">Your Opinion ...</label>
+            <div className="flex justify-between items-center mb-2">
+                <label className="block font-medium text-black">Your Opinion ...</label>
+
+                {/* characters limiter */}
+                <div className="flex justify-between items-center">
+                    <span className={`text-xs ${content.length > MAX_LENGTH * 0.9 ? 'text-red-500' : 'text-slate-500'}`}>
+                        {content.length}/{MAX_LENGTH}
+                    </span>
+                </div>
+            </div>
+
             <input
                 autoFocus
                 value={content} 
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => { setContent(e.target.value)}}
                 className="w-full border px-3 py-2 mb-4 rounded text-md"
                 placeholder="write your opinion here ..."
             />
@@ -66,8 +79,9 @@ function Overlay({
                 >Cancel</button>
 
                 <button 
-                    className="px-4 py-2 bg-cyan-600 text-white rounded cursor-pointer hover:scale-110 transform transition-transform duration-200 ease-in-out "
+                    className="px-4 py-2 bg-cyan-600 text-white rounded cursor-pointer hover:scale-110 transform transition-transform duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     onClick={() => handleSubmit()}
+                    disabled={(!content.trim() || content.length > MAX_LENGTH)}
                 >
                     Submit
                 </button>
