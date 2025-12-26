@@ -74,6 +74,9 @@ const getOpinions = async (req: Request, res: Response) => {
         prisma.opinion.findMany({
             skip: (page - 1) * pageSize,
             take: pageSize,
+            orderBy: {
+                createdAt: "desc",
+            },
             select: {
                 id: true,
                 opinion: true,

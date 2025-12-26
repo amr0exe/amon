@@ -2,6 +2,7 @@ import { useState } from "react"
 import { hashToBase64, signTheOpp } from "../../service/db"
 import axios from "axios"
 import { generateNonce } from "../../service/db"
+import { env } from "../../config/env"
 
 function Overlay({
     onClose,
@@ -28,7 +29,7 @@ function Overlay({
             const sig_hash = hashToBase64(sig_str)
             const signed_hash = await signTheOpp(username, sig_hash)
 
-            const response = await axios.post("http://localhost:3000/opp", { nickname: username, content, signedContent: sig_content}, {
+            const response = await axios.post(`${env.url}/opp`, { nickname: username, content, signedContent: sig_content}, {
                 headers: {
                     "X-Nonce": nonce,
                     "X-Nickname": username,
@@ -38,7 +39,7 @@ function Overlay({
             if (response.data.status === "success") {
                 console.log("Opp raised successfully")
 
-                onSuccess?.()
+                await onSuccess?.()
                 onClose()
                 return
             }

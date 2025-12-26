@@ -48,6 +48,9 @@ const getComment = async (req: Request, res: Response) => {
             where: { opinionId: parseInt(oppId) },
             skip: (page - 1) * pageSize,
             take: pageSize,
+            orderBy: {
+                createdAt: "desc",
+            },
             select: {
                 id: true,
                 content: true,

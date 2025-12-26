@@ -1,6 +1,7 @@
 import axios from "axios"
 import { useState, useEffect } from "react"
 import { generateNonce, getActiveUser, hashToBase64, signTheOpp } from "./db";
+import { env } from "../config/env";
 
 export type Opps = {
     id: number;
@@ -51,7 +52,7 @@ export function useOpps(nickname: string) {
             const signed_hash = await signTheOpp(nickname, sig_hash)
 
             if (page > 1) { setLoading(true) }
-            const response = await axios.get(`http://localhost:3000/opp?page=${pageNum}`,
+            const response = await axios.get(`${env.url}/opp?page=${pageNum}`,
                 {
                     headers: {
                         'x-nonce': nonce,
@@ -61,11 +62,6 @@ export function useOpps(nickname: string) {
                 })
             setHasMore(response.data.hasMore)
 
-            if (!hasMore) {
-                console.log("End of Opp records ...")
-                return
-            }
-            
             if (append) {
                 setOpps(prev => {
                     const map = new Map(prev.map(o => [o.id, o]))
@@ -76,6 +72,11 @@ export function useOpps(nickname: string) {
                 })
             } else {
                 setOpps(response.data.opps)
+            }
+
+            if (!hasMore) {
+                console.log("End of Opp records ...")
+                return
             }
         } catch (err) {
             setError(err as Error)
@@ -110,15 +111,22 @@ export function useOpps(nickname: string) {
         )
     }
 
+    const refetch = async () => {
+        setPage(1)
+        setHasMore(true)
+        setLoading(true)
+        await fetchOpps(1, false)
+        setLoading(false)
+    }
+
     useEffect(() => {
         fetchOpps(1, false)
     }, [])
 
-    return { opps, setOpps, loading, error, refetch: () => {
-        setPage(1)
-        setHasMore(true)
-        fetchOpps(1, false)
-        }, moveToTop, incrementCommentCount, loadMore, hasMore, loadingMore }
+    return {
+        opps, setOpps, loading, error, refetch, 
+        moveToTop, incrementCommentCount, loadMore, hasMore, loadingMore
+    }
 }
 
 export async function postComment(nickname: string, oppId: number, content: string ) {
@@ -126,6 +134,7 @@ export async function postComment(nickname: string, oppId: number, content: stri
         console.log("Body for comment can't be empty")
         return
     }
+
     try {
         const req_type = "POST"
         const nonce = generateNonce()
@@ -133,7 +142,7 @@ export async function postComment(nickname: string, oppId: number, content: stri
         const sig_hash = hashToBase64(sig_str)
         const signed_hash = await signTheOpp(nickname, sig_hash)
 
-        const resp = await axios.post("http://localhost:3000/comment", { nickname, oppId, content },
+        const resp = await axios.post(`${env.url}/comment`, { nickname, oppId, content },
             {
                 headers: {
                     'x-nonce': nonce,
@@ -155,7 +164,7 @@ export function useGetComments(oppId: number, page: number): CommentR[] {
 
     try {
         async function fetchComments() {
-            const resp = await axios.get(`http://localhost:3000/opp/${oppId}/comments?page=${page}`)
+            const resp = await axios.get(`${env.url}/opp/${oppId}/comments?page=${page}`)
             setComments(resp.data.comments)
         }
         fetchComments()
